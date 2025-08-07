@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Release Gate - CI/CD Deployment Control</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0a0a;
+            min-height: 100vh;
+            padding: 20px;
+            color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid #333333;
+        }
+
+        .container::before {
+            display: none;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .cs-symbol {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: #2563eb;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 4px 16px rgba(37, 99, 235, 0.3);
+        }
+
+        .cs-symbol::before {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            border: 3px solid #ffffff;
+            border-radius: 50%;
+            top: 16px;
+            left: 16px;
+        }
+
+        .cs-symbol::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: #ffffff;
+            border-radius: 2px;
+            bottom: 16px;
+            right: 16px;
+        }
+
+        .cs-symbol .nodes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .cs-symbol .nodes::before {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #ffffff;
+            border-radius: 50%;
+            top: 36px;
+            left: 50px;
+        }
+
+        .cs-symbol .nodes::after {
+            content: '';
+            position: absolute;
+            width: 2px;
+            height: 20px;
+            background: #ffffff;
+            top: 30px;
+            left: 28px;
+            transform: rotate(45deg);
+        }
+
+        .header h1 {
+            color: #f5f5f5;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            color: #a1a1aa;
+            font-size: 1.1rem;
+            font-weight: 400;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .panel {
+            background: #262626;
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid #404040;
+            transition: all 0.2s ease;
+        }
+
+        .panel:hover {
+            border-color: #2563eb;
+        }
+
+        .panel h2 {
+            color: #f5f5f5;
+            margin-bottom: 25px;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+        }
+
+        .icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .icon.code { background: #2563eb; }
+        .icon.ai { background: #059669; }
+        .icon.deploy { background: #dc2626; }
+        .icon.monitor { background: #ea580c; }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #d4d4d8;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #404040;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            background: #1a1a1a;
+            color: #f5f5f5;
+        }
+
+        .form-group select {
+            background: #d5cfcf;
+            color: #000000;
+        }
+
+        .form-group input::placeholder, .form-group textarea::placeholder {
+            color: #71717a;
+        }
+
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none;
+            border-color: #2563eb;
+            background: #d5cfcf;
+        }
+
+        .form-group textarea {
+            height: 120px;
+            resize: vertical;
+            font-family: 'Courier New', monospace;
+        }
+
+        .btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-width: 160px;
+        }
+
+        .btn::before {
+            display: none;
+        }
+
+        .btn:hover::before {
+            display: none;
+        }
+
+        .btn:hover {
+            background: #1d4ed8;
+        }
+
+        .btn:disabled {
+            background: #404040;
+            color: #71717a;
+            cursor: not-allowed;
+        }
+
+        .btn.secondary {
+            background: #dc2626;
+        }
+
+        .btn.secondary:hover {
+            background: #b91c1c;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .analysis-result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid;
+        }
+
+        .result-approved {
+            background: #f0fff4;
+            border-color: #48bb78;
+            color: #22543d;
+        }
+
+        .result-rejected {
+            background: #fed7d7;
+            border-color: #f56565;
+            color: #742a2a;
+        }
+
+        .result-warning {
+            background: #fefcbf;
+            border-color: #ed8936;
+            color: #744210;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .metric-card {
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #404040;
+        }
+
+        .metric-card:hover {
+            border-color: #525252;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2563eb;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: #a1a1aa;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+
+        .deployment-log {
+            background: #0a0a0a;
+            color: #22c55e;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+            border: 1px solid #404040;
+        }
+
+        .deployment-log::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .deployment-log::-webkit-scrollbar-track {
+            background: #262626;
+        }
+
+        .deployment-log::-webkit-scrollbar-thumb {
+            background: #404040;
+            border-radius: 3px;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 2px 0;
+        }
+
+        .log-timestamp {
+            color: #9ca3af;
+        }
+
+        .log-success { color: #10b981; }
+        .log-error { color: #ef4444; }
+        .log-warning { color: #f59e0b; }
+        .log-info { color: #3b82f6; }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            min-width: 160px;
+            border: none;
+        }
+
+        .status-approved {
+            background: transparent;
+            color: #059669;
+            border: none;
+        }
+
+        .status-rejected {
+            background: transparent;
+            color: #dc2626;
+            border: none;
+        }
+
+        .status-pending {
+            background: transparent;
+            color: #2563eb;
+            border: none;
+        }
+
+        .status-deployed {
+            background: transparent;
+            color: #059669;
+            border: none;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="cs-symbol">
+                <div class="nodes"></div>
+            </div>
+            <h1>AI Release Gate</h1>
+            <p>Intelligent CI/CD deployment control with automated risk assessment</p>
+        </div>
+
+        <div class="main-grid">
+            <div class="panel">
+                <h2><span class="icon code">C</span>Code Analysis</h2>
+                
+                <div class="form-group">
+                    <label for="projectName">Project Name</label>
+                    <input type="text" id="projectName" placeholder="my-api-service.." value="">
+                </div>
+
+                <div class="form-group">
+                    <label for="environment">Target Environment</label>
+                    <select id="environment">
+                        <option value="staging">Staging</option>
+                        <option value="production">Production</option>
+                        <option value="dev">Development</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="commitHash">Commit Hash</label>
+                    <input type="text" id="commitHash" placeholder="abc123def456.." value="">
+                </div>
+
+                <div class="form-group">
+                    <label for="codeChanges">Code Changes (diff/files)</label>
+                    <textarea id="codeChanges" placeholder="Paste your code changes here..."></textarea>
+                </div>
+
+                <button class="btn" onclick="analyzeDeployment()">
+                    <span id="analyzeBtn">Analyze Deployment</span>
+                </button>
+            </div>
+
+            <div class="panel">
+                <h2><span class="icon ai">AI</span>Risk Assessment</h2>
+                
+                <div id="riskAssessment">
+                    <p style="color: #718096; text-align: center; padding: 40px 0;">
+                        Submit code changes for AI analysis
+                    </p>
+                </div>
+
+                <div class="metrics-grid" id="metricsGrid" style="display: none;">
+                    <div class="metric-card">
+                        <div class="metric-value" id="riskScore">--</div>
+                        <div class="metric-label">Risk Score</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="testCoverage">--</div>
+                        <div class="metric-label">Test Coverage</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="complexityScore">--</div>
+                        <div class="metric-label">Complexity</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="securityScore">--</div>
+                        <div class="metric-label">Security</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel full-width">
+                <h2><span class="icon deploy">D</span>Deployment Control</h2>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 16px;">
+                    <div style="flex: 1;">
+                        <span class="status-badge status-pending" id="deploymentStatus">Pending Analysis</span>
+                    </div>
+                    <div style="display: flex; gap: 16px;">
+                        <button class="btn" onclick="deployToEnvironment()" id="deployBtn" disabled>
+                            Deploy
+                        </button>
+                        <button class="btn" onclick="rollbackDeployment()" id="rollbackBtn" disabled>
+                            Rollback
+                        </button>
+                    </div>
+                </div>
+
+                <div class="deployment-log" id="deploymentLog">
+                    <div class="log-entry"><span class="log-timestamp">[2025-08-05 14:30:00]</span> <span class="log-info">AI Release Gate initialized</span></div>
+                    <div class="log-entry"><span class="log-timestamp">[2025-08-05 14:30:01]</span> <span class="log-info">Waiting for code analysis...</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let analysisInProgress = false;
+        let deploymentApproved = false;
+        let deploymentHistory = [];
+
+        function addLogEntry(message, type = 'info') {
+            const log = document.getElementById('deploymentLog');
+            const timestamp = new Date().toLocaleString();
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="log-timestamp">[${timestamp}]</span> <span class="log-${type}">${message}</span>`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function updateDeploymentStatus(status, className) {
+            const statusElement = document.getElementById('deploymentStatus');
+            statusElement.textContent = status;
+            statusElement.className = `status-badge status-${className}`;
+        }
+
+        function analyzeDeployment() {
+            if (analysisInProgress) return;
+            
+            analysisInProgress = true;
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            analyzeBtn.innerHTML = 'Analyzing...';
+            
+            addLogEntry('Starting AI-powered code analysis...', 'info');
+            
+            // Simulate AI analysis
+            setTimeout(() => {
+                performCodeAnalysis();
+            }, 2000);
+        }
+
+        function performCodeAnalysis() {
+            const codeChanges = document.getElementById('codeChanges').value;
+            const environment = document.getElementById('environment').value;
+            const projectName = document.getElementById('projectName').value;
+            
+            addLogEntry('Analyzing code complexity and security patterns...', 'info');
+            
+            setTimeout(() => {
+                // Simulate AI analysis results
+                const analysis = simulateAIAnalysis(codeChanges, environment);
+                displayAnalysisResults(analysis);
+                
+                analysisInProgress = false;
+                document.getElementById('analyzeBtn').innerHTML = 'Analyze Deployment';
+                
+                addLogEntry(`Analysis complete. Risk score: ${analysis.riskScore}/10`, 
+                          analysis.approved ? 'success' : 'warning');
+                
+                if (analysis.approved) {
+                    updateDeploymentStatus('Approved', 'approved');
+                    document.getElementById('deployBtn').disabled = false;
+                    deploymentApproved = true;
+                } else {
+                    updateDeploymentStatus('Rejected', 'rejected');
+                    deploymentApproved = false;
+                }
+            }, 1500);
+        }
+
+        function performCodeAnalysis() {
+        const codeChanges = document.getElementById('codeChanges').value;
+        const environment = document.getElementById('environment').value;
+        const projectName = document.getElementById('projectName').value;
+
+        const payload = {
+            project_name: projectName,
+            environment: environment,
+            commit_hash: "dummy1234", // You can make this real if needed
+            code_changes: codeChanges
+        };
+
+        fetch("http://localhost:8000/api/analyze", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(analysis => {
+            displayAnalysisResults(analysis);
+            analysisInProgress = false;
+            document.getElementById('analyzeBtn').innerHTML = 'Analyze Deployment';
+
+            addLogEntry(`Analysis complete. Risk score: ${analysis.risk_score}/10`, 
+                analysis.approved ? 'success' : 'warning');
+
+            if (analysis.approved) {
+                updateDeploymentStatus('Approved', 'approved');
+                document.getElementById('deployBtn').disabled = false;
+                deploymentApproved = true;
+            } else {
+                updateDeploymentStatus('Rejected', 'rejected');
+                deploymentApproved = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error during analysis:', error);
+            addLogEntry('Analysis failed. See console for details.', 'error');
+            analysisInProgress = false;
+            document.getElementById('analyzeBtn').innerHTML = 'Analyze Deployment';
+        });
+
+        addLogEntry('Analyzing code complexity and security patterns...', 'info');
+    }
+
+
+        function generateIssues(riskScore, hasValidation, hasErrorHandling, hasSecurityCheck, isPaymentCode) {
+            const issues = [];
+            
+            if (!hasValidation) issues.push('Missing input validation');
+            if (!hasErrorHandling) issues.push('Insufficient error handling');
+            if (!hasSecurityCheck && isPaymentCode) issues.push('Payment endpoint lacks proper authentication');
+            if (riskScore > 7) issues.push('High complexity detected');
+            
+            return issues;
+        }
+
+        function generateRecommendations(riskScore, approved) {
+            const recommendations = [];
+            
+            if (!approved) {
+                recommendations.push('Add comprehensive input validation');
+                recommendations.push('Implement proper error handling');
+                recommendations.push('Add authentication middleware');
+            } else {
+                recommendations.push('Consider adding integration tests');
+                recommendations.push('Monitor payment success rates post-deployment');
+            }
+            
+            return recommendations;
+        }
+
+        function displayAnalysisResults(analysis) {
+            const resultDiv = document.getElementById('riskAssessment');
+            const metricsGrid = document.getElementById('metricsGrid');
+            
+            // Update metrics
+            document.getElementById('riskScore').textContent = `${analysis.risk_score}/10`;
+            document.getElementById('testCoverage').textContent = `${analysis.test_coverage}%`;
+            document.getElementById('complexityScore').textContent = `${analysis.complexity_score}/10`;
+            document.getElementById('securityScore').textContent = `${analysis.security_score}/10`;
+            
+            metricsGrid.style.display = 'grid';
+            
+            // Display results
+            const resultClass = analysis.approved ? 'result-approved' : 'result-rejected';
+            const resultTitle = analysis.approved ? 'Deployment Approved' : 'Deployment Blocked';
+            
+            let issuesHtml = '';
+            if (analysis.issues.length > 0) {
+                issuesHtml = `
+                    <h4>Issues Detected:</h4>
+                    <ul>
+                        ${analysis.issues.map(issue => `<li>${issue}</li>`).join('')}
+                    </ul>
+                `;
+            }
+            
+            let recommendationsHtml = '';
+            if (analysis.recommendations.length > 0) {
+                recommendationsHtml = `
+                    <h4>Recommendations:</h4>
+                    <ul>
+                        ${analysis.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                    </ul>
+                `;
+            }
+            
+            resultDiv.innerHTML = `
+                <div class="analysis-result ${resultClass}">
+                    <h3 style="margin-bottom: 16px;">${resultTitle}</h3>
+                    <p><strong>Risk Assessment:</strong> ${analysis.risk_score}/10 </p>
+                    ${issuesHtml}
+                    ${recommendationsHtml}
+                </div>
+            `;
+        }
+
+        function deployToEnvironment() {
+            if (!deploymentApproved) return;
+            
+            const environment = document.getElementById('environment').value;
+            const projectName = document.getElementById('projectName').value;
+            const commitHash = document.getElementById('commitHash').value;
+            
+            document.getElementById('deployBtn').disabled = true;
+            updateDeploymentStatus('Deploying...', 'pending');
+            
+            addLogEntry(`Starting deployment to ${environment}...`, 'info');
+            addLogEntry(`Project: ${projectName}`, 'info');
+            addLogEntry(`Commit: ${commitHash}`, 'info');
+            
+            // Simulate deployment process
+            setTimeout(() => {
+                addLogEntry('Building Docker image...', 'info');
+            }, 1000);
+            
+            setTimeout(() => {
+                addLogEntry('Running pre-deployment tests...', 'info');
+            }, 2000);
+            
+            setTimeout(() => {
+                addLogEntry('Deploying to Kubernetes cluster...', 'info');
+            }, 3500);
+            
+            setTimeout(() => {
+                addLogEntry('Health checks passing...', 'success');
+                addLogEntry('Deployment completed successfully!', 'success');
+                updateDeploymentStatus('Deployed Successfully', 'approved');
+                document.getElementById('rollbackBtn').disabled = false;
+                
+                // Store deployment in history
+                deploymentHistory.push({
+                    timestamp: new Date(),
+                    environment,
+                    project: projectName,
+                    commit: commitHash,
+                    status: 'success'
+                });
+            }, 5000);
+        }
+
+        function rollbackDeployment() {
+            addLogEntry('Initiating rollback procedure...', 'warning');
+            updateDeploymentStatus('Rolling Back...', 'pending');
+            document.getElementById('rollbackBtn').disabled = true;
+            
+            setTimeout(() => {
+                addLogEntry('Rolling back to previous version...', 'warning');
+            }, 1000);
+            
+            setTimeout(() => {
+                addLogEntry('Rollback completed successfully', 'success');
+                updateDeploymentStatus('Rolled Back', 'approved');
+                document.getElementById('deployBtn').disabled = false;
+                document.getElementById('rollbackBtn').disabled = false;
+            }, 3000);
+        }
+
+        // Update deploy target when environment changes
+        document.getElementById('environment').addEventListener('change', function() {
+            // Remove the deploy target update since button text is now static
+        });
+
+        // Initialize
+        // Deploy button now has static text
+
+        // Adding the backend functionality
+        
+        fetch("http://localhost:8000/api/sdlc-endpoint", {
+        method: "GET"
+        })
+        .then(response => response.json())
+        .then(data => {
+        console.log(data);
+        })
+        .catch(error => {
+        console.error('Error:', error);
+        });
+
+    </script>
+</body>
+</html>
