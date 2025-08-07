@@ -9,6 +9,8 @@ python ctxcli.py
 - Run commands
 
 ```
+python ctxcli.py --help
+python ctxcli.py show-graph
 python ctxcli.py validate
 python ctxcli.py compliance
 python ctxcli.py ci --trigger
